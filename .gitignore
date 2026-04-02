@@ -1,6 +1,11 @@
-# PyInstaller build artifacts
-build/
-dist/
+# Python
 *.pyc
 __pycache__/
+
+# Virtual environments
+.venv/
 .venv_build/
+
+# Output
+*.csv
+cycle_plots/

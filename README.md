@@ -1,16 +1,27 @@
 # BatteryProcessing
 
-### Running from source
-* Requires Python 3.10+ with `pandas` and `matplotlib` (`pip install -r requirements.txt`)
-* Run `python plot_battery_csv.py <your_data.csv>` to launch the interactive plotter
+Tkinter GUI tool for processing and plotting raw battery cycler data (.xls/.xlsx) from Chinese-language battery testers.
 
-### Standalone executable (no Python needed)
-* Build it yourself: run `./build.sh` (macOS/Linux) or `build.bat` (Windows)
-* Output lands in `dist/BatteryPlotter/` — zip that folder to distribute
-* End users just run `BatteryPlotter <data.csv>` (or `BatteryPlotter.exe` on Windows)
-* See `BUILD_INSTRUCTIONS.md` for details and troubleshooting
+### What it does
 
+1. **Load** — Opens raw .xls/.xlsx files via a file picker. Automatically skips the first (Info) and last (Cycle) sheets, concatenates all middle Detail sheets, and translates Mandarin headers and status labels to English.
+2. **Export** — Saves the processed, translated data as a clean CSV.
+3. **Batch Plot** — Generates per-cycle Voltage vs Time and Voltage vs Capacity plots (colored by charge/discharge status), exported as 300 dpi PNGs. Supports line or scatter style.
+4. **Custom Plot** — Pick any X/Y axes, filter by cycle range, toggle line/scatter and color-by-status, preview in an embedded plot window, and save as 300 dpi PNG.
 
+### Requirements
 
-### AI Use:
-I used generative AI tools like Claude Opus 4.6 and Gemini 3 for generating and fine tuning this battery analysis tool.
+- Python 3.8+
+- Install dependencies: `pip install -r requirements.txt`
+
+### Usage
+
+```
+python battery_gui.py
+```
+
+No command-line arguments needed — everything is done through the GUI.
+
+### AI Use
+
+I used generative AI tools (Claude Opus 4.6, Gemini 3) for generating and refining this battery analysis tool.
