@@ -1,0 +1,6 @@
+# Runtime dependencies
+pandas>=2.0
+matplotlib>=3.7
+
+# Build dependency (not needed at runtime)
+pyinstaller>=6.0

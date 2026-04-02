@@ -1,12 +1,14 @@
 # BatteryProcessing
 
-### Tool Usage:
-* Open CMD, Powershell, (or terminal if on a Unix system) in the tool directory
-* Run ```python plot_battery_csv.py``` to start up the GUI
-* Browse for your raw data
-* Process the data to a new CSV
-* Switch tabs to the plotter engine
-* Batch plot per cycle or generate individual plots
+### Running from source
+* Requires Python 3.10+ with `pandas` and `matplotlib` (`pip install -r requirements.txt`)
+* Run `python plot_battery_csv.py <your_data.csv>` to launch the interactive plotter
+
+### Standalone executable (no Python needed)
+* Build it yourself: run `./build.sh` (macOS/Linux) or `build.bat` (Windows)
+* Output lands in `dist/BatteryPlotter/` — zip that folder to distribute
+* End users just run `BatteryPlotter <data.csv>` (or `BatteryPlotter.exe` on Windows)
+* See `BUILD_INSTRUCTIONS.md` for details and troubleshooting
 
 
 
