@@ -72,6 +72,9 @@ for zh, en in STATUS_MAP_UTF8.items():
 
 STATUS_MAP = {**STATUS_MAP_UTF8, **STATUS_MAP_GARBLED}
 
+APP_VERSION = "1.0.0"
+APP_DATE = "2026-04-03"
+
 STATUS_COLORS = {
     "CC_charge":    "#1f77b4",
     "CC_discharge": "#d62728",
@@ -178,6 +181,17 @@ class BatteryGUI(tk.Tk):
 
         self._build_batch_tab()
         self._build_custom_tab()
+
+        # Footer with version info
+        footer = ttk.Frame(self, padding=(5, 2))
+        footer.pack(fill=tk.X, side=tk.BOTTOM)
+        ttk.Separator(self).pack(fill=tk.X, side=tk.BOTTOM)
+        ttk.Label(
+            footer,
+            text=f"v{APP_VERSION}  ({APP_DATE})",
+            foreground="gray",
+            font=("TkDefaultFont", 8),
+        ).pack(side=tk.RIGHT)
 
     # ── Load / Export ─────────────────────────────────────────────────
 
