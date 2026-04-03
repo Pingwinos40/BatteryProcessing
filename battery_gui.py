@@ -136,6 +136,10 @@ def load_and_process(filepath: str) -> pd.DataFrame:
     if "absolute_time" in df.columns:
         df["absolute_time"] = pd.to_datetime(df["absolute_time"], errors="coerce")
 
+    # Derived column: voltage in volts
+    if "voltage_mV" in df.columns:
+        df["voltage_V"] = df["voltage_mV"] / 1000.0
+
     return df
 
 
@@ -312,11 +316,11 @@ class BatteryGUI(tk.Tk):
                 cyc_df["cycle_time_s"] = cyc_df["relative_time_s"] - t0
 
             # ── Plot 1: Voltage vs Time ──────────────────────────────
-            if "cycle_time_s" in cyc_df.columns and "voltage_mV" in cyc_df.columns:
+            if "cycle_time_s" in cyc_df.columns and "voltage_V" in cyc_df.columns:
                 fig, ax = plt.subplots(figsize=(10, 5))
-                self._plot_by_status(ax, cyc_df, "cycle_time_s", "voltage_mV", style)
+                self._plot_by_status(ax, cyc_df, "cycle_time_s", "voltage_V", style)
                 ax.set_xlabel("Time from cycle start (s)")
-                ax.set_ylabel("Voltage (mV)")
+                ax.set_ylabel("Voltage (V)")
                 ax.set_title(f"Cycle {cyc_int} — Voltage vs Time")
                 ax.legend(loc="best")
                 ax.grid(True, alpha=0.3)
@@ -332,11 +336,11 @@ class BatteryGUI(tk.Tk):
             self.update_idletasks()
 
             # ── Plot 2: Voltage vs Capacity ──────────────────────────
-            if "capacity_mAh" in cyc_df.columns and "voltage_mV" in cyc_df.columns:
+            if "capacity_mAh" in cyc_df.columns and "voltage_V" in cyc_df.columns:
                 fig, ax = plt.subplots(figsize=(10, 5))
-                self._plot_by_status(ax, cyc_df, "capacity_mAh", "voltage_mV", style)
+                self._plot_by_status(ax, cyc_df, "capacity_mAh", "voltage_V", style)
                 ax.set_xlabel("Capacity (mAh)")
-                ax.set_ylabel("Voltage (mV)")
+                ax.set_ylabel("Voltage (V)")
                 ax.set_title(f"Cycle {cyc_int} — Voltage vs Capacity")
                 ax.legend(loc="best")
                 ax.grid(True, alpha=0.3)
@@ -468,8 +472,8 @@ class BatteryGUI(tk.Tk):
         elif numeric_cols:
             self.custom_x.set(numeric_cols[0])
 
-        if "voltage_mV" in numeric_cols:
-            self.custom_y.set("voltage_mV")
+        if "voltage_V" in numeric_cols:
+            self.custom_y.set("voltage_V")
         elif len(numeric_cols) > 1:
             self.custom_y.set(numeric_cols[1])
 
