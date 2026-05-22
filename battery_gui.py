@@ -72,7 +72,7 @@ for zh, en in STATUS_MAP_UTF8.items():
 
 STATUS_MAP = {**STATUS_MAP_UTF8, **STATUS_MAP_GARBLED}
 
-APP_VERSION = "1.0.0"
+APP_VERSION = "1.1.0"
 APP_DATE = "2026-04-03"
 
 STATUS_COLORS = {
@@ -82,6 +82,15 @@ STATUS_COLORS = {
     "CV_discharge": "#ff7f0e",
     "rest":         "#7f7f7f",
 }
+
+# Time unit conversion: column suffix "_s" assumed to be seconds
+TIME_UNITS = {
+    "seconds": (1.0, "s"),
+    "minutes": (1.0 / 60.0, "min"),
+    "hours":   (1.0 / 3600.0, "h"),
+}
+
+TIME_COLUMNS = {"relative_time_s", "cycle_time_s"}
 
 
 # ──────────────────────────────────────────────────────────────────────
@@ -282,6 +291,15 @@ class BatteryGUI(tk.Tk):
 
         ttk.Separator(ctrl, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=10)
 
+        ttk.Label(ctrl, text="Time unit:").pack(side=tk.LEFT)
+        self.batch_time_unit = tk.StringVar(value="seconds")
+        ttk.Combobox(
+            ctrl, textvariable=self.batch_time_unit,
+            values=list(TIME_UNITS.keys()), state="readonly", width=10,
+        ).pack(side=tk.LEFT, padx=(5, 0))
+
+        ttk.Separator(ctrl, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=10)
+
         ttk.Button(ctrl, text="Generate All Cycle Plots", command=self._run_batch_plot).pack(side=tk.LEFT)
 
         self.batch_status = ttk.Label(ctrl, text="", foreground="gray")
@@ -311,6 +329,8 @@ class BatteryGUI(tk.Tk):
             return
 
         style = self.batch_style.get()
+        time_unit = self.batch_time_unit.get()
+        time_factor, time_label = TIME_UNITS.get(time_unit, (1.0, "s"))
         cycles = sorted(self.df["cycle"].dropna().unique())
         total = len(cycles) * 2
         self.batch_progress["maximum"] = total
@@ -327,13 +347,13 @@ class BatteryGUI(tk.Tk):
             # Zero time to start of cycle
             if "relative_time_s" in cyc_df.columns:
                 t0 = cyc_df["relative_time_s"].min()
-                cyc_df["cycle_time_s"] = cyc_df["relative_time_s"] - t0
+                cyc_df["cycle_time_s"] = (cyc_df["relative_time_s"] - t0) * time_factor
 
             # ── Plot 1: Voltage vs Time ──────────────────────────────
             if "cycle_time_s" in cyc_df.columns and "voltage_V" in cyc_df.columns:
                 fig, ax = plt.subplots(figsize=(10, 5))
                 self._plot_by_status(ax, cyc_df, "cycle_time_s", "voltage_V", style)
-                ax.set_xlabel("Time from cycle start (s)")
+                ax.set_xlabel(f"Time from cycle start ({time_label})")
                 ax.set_ylabel("Voltage (V)")
                 ax.set_title(f"Cycle {cyc_int} — Voltage vs Time")
                 ax.legend(loc="best")
@@ -426,28 +446,36 @@ class BatteryGUI(tk.Tk):
             row=3, column=0, columnspan=2, sticky=tk.W, pady=2
         )
 
+        # Time unit (applied when X or Y is a time column)
+        ttk.Label(left, text="Time unit:").grid(row=4, column=0, sticky=tk.W, pady=2)
+        self.custom_time_unit = tk.StringVar(value="seconds")
+        ttk.Combobox(
+            left, textvariable=self.custom_time_unit,
+            values=list(TIME_UNITS.keys()), state="readonly", width=20,
+        ).grid(row=4, column=1, pady=2, padx=5)
+
         # Cycle selection
-        ttk.Separator(left, orient=tk.HORIZONTAL).grid(row=4, column=0, columnspan=2, sticky=tk.EW, pady=8)
-        ttk.Label(left, text="Cycles:").grid(row=5, column=0, sticky=tk.W, pady=2)
+        ttk.Separator(left, orient=tk.HORIZONTAL).grid(row=5, column=0, columnspan=2, sticky=tk.EW, pady=8)
+        ttk.Label(left, text="Cycles:").grid(row=6, column=0, sticky=tk.W, pady=2)
 
         self.cycle_mode = tk.StringVar(value="all")
         ttk.Radiobutton(left, text="All cycles", variable=self.cycle_mode, value="all",
-                         command=self._toggle_cycle_entry).grid(row=5, column=1, sticky=tk.W, pady=2)
+                         command=self._toggle_cycle_entry).grid(row=6, column=1, sticky=tk.W, pady=2)
         ttk.Radiobutton(left, text="Selected:", variable=self.cycle_mode, value="selected",
-                         command=self._toggle_cycle_entry).grid(row=6, column=0, sticky=tk.W, pady=2)
+                         command=self._toggle_cycle_entry).grid(row=7, column=0, sticky=tk.W, pady=2)
 
         self.cycle_entry = ttk.Entry(left, width=22)
-        self.cycle_entry.grid(row=6, column=1, pady=2, padx=5)
+        self.cycle_entry.grid(row=7, column=1, pady=2, padx=5)
         self.cycle_entry.insert(0, "e.g. 1,2,3 or 1-5")
         self.cycle_entry.config(state="disabled")
 
         # Buttons
-        ttk.Separator(left, orient=tk.HORIZONTAL).grid(row=7, column=0, columnspan=2, sticky=tk.EW, pady=8)
+        ttk.Separator(left, orient=tk.HORIZONTAL).grid(row=8, column=0, columnspan=2, sticky=tk.EW, pady=8)
         ttk.Button(left, text="Preview Plot", command=self._preview_plot).grid(
-            row=8, column=0, columnspan=2, sticky=tk.EW, pady=2
+            row=9, column=0, columnspan=2, sticky=tk.EW, pady=2
         )
         ttk.Button(left, text="Save as PNG (300 dpi)…", command=self._save_custom_plot).grid(
-            row=9, column=0, columnspan=2, sticky=tk.EW, pady=2
+            row=10, column=0, columnspan=2, sticky=tk.EW, pady=2
         )
 
         # Right panel: matplotlib canvas
@@ -546,6 +574,20 @@ class BatteryGUI(tk.Tk):
         style = self.custom_style.get()
         color_by = self.custom_color_status.get()
 
+        # Apply time-unit conversion if a known time column is on either axis
+        time_unit = self.custom_time_unit.get()
+        time_factor, time_label = TIME_UNITS.get(time_unit, (1.0, "s"))
+        plot_df = plot_df.copy()
+        for col in (x_col, y_col):
+            if col in TIME_COLUMNS and col in plot_df.columns:
+                plot_df[col] = plot_df[col] * time_factor
+
+        def _axis_label(col):
+            if col in TIME_COLUMNS:
+                base = col[:-2] if col.endswith("_s") else col
+                return f"{base} ({time_label})"
+            return col
+
         if color_by and "status" in plot_df.columns:
             for status, group in plot_df.groupby("status"):
                 color = STATUS_COLORS.get(status, "#333333")
@@ -573,9 +615,11 @@ class BatteryGUI(tk.Tk):
             else:
                 title_suffix = f"  (Cycles {selected[0]}–{selected[-1]}, n={len(selected)})"
 
-        self.custom_ax.set_xlabel(x_col)
-        self.custom_ax.set_ylabel(y_col)
-        self.custom_ax.set_title(f"{y_col} vs {x_col}{title_suffix}")
+        x_label = _axis_label(x_col)
+        y_label = _axis_label(y_col)
+        self.custom_ax.set_xlabel(x_label)
+        self.custom_ax.set_ylabel(y_label)
+        self.custom_ax.set_title(f"{y_label} vs {x_label}{title_suffix}")
         self.custom_ax.grid(True, alpha=0.3)
         self.custom_fig.tight_layout()
         self.custom_canvas.draw()
